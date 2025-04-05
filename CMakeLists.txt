@@ -90,7 +90,9 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Enable floating point support for printf
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float")
-
+# set(CMAKE_EXE_LINKER_FLAGS
+#     "${CMAKE_EXE_LINKER_FLAGS} -u _printf_float -Wl,--specs=nano.specs -Wl,--specs=nosys.specs"
+# )
 # Convert output to hex and binary
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}> ${PROJECT_NAME}.hex

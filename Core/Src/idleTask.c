@@ -30,7 +30,11 @@ void runIdleTask(){
         }
     }
 
-    printf("soe : %f\n", soeByOCV_percent.data);
+    // //printf("soe : %lu\n", soeByOCV_percent.data);
+    // printf("\e[1;1H\e[2J");
+    // printf("hello world\n");
+    // printf("soe: %f\n", 3.14f);
+    
 
 
 

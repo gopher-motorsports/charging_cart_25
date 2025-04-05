@@ -61,6 +61,8 @@ void Error_Handler(void);
 #define Gsense_GPIO_Port GPIOC
 #define Heartbeat_Pin GPIO_PIN_1
 #define Heartbeat_GPIO_Port GPIOC
+#define Fault_Pin GPIO_PIN_2
+#define Fault_GPIO_Port GPIOC
 #define LED1_Pin GPIO_PIN_3
 #define LED1_GPIO_Port GPIOA
 

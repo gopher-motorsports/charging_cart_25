@@ -49,12 +49,14 @@ CAN_HandleTypeDef hcan2;
 
 UART_HandleTypeDef huart1;
 
-osThreadId defaultTaskHandle;
+osThreadId printTaskHandle;
+uint32_t printTaskBuffer[ 1024 ];
+osStaticThreadDef_t printTaskControlBlock;
 osThreadId idleTaskHandle;
-uint32_t idleTaskBuffer[ 128 ];
+uint32_t idleTaskBuffer[ 1024 ];
 osStaticThreadDef_t idleTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
-uint32_t serviceGcanBuffer[ 128 ];
+uint32_t serviceGcanBuffer[ 1024 ];
 osStaticThreadDef_t serviceGcanControlBlock;
 /* USER CODE BEGIN PV */
 
@@ -66,7 +68,7 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_USART1_UART_Init(void);
-void StartDefaultTask(void const * argument);
+void startPrintTask(void const * argument);
 void startIdleTask(void const * argument);
 void startServiceGcanTask(void const * argument);
 
@@ -122,8 +124,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  init_can(&hcan2, GCAN0);
-  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -159,16 +160,16 @@ int main(void)
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  /* definition and creation of printTask */
+  osThreadStaticDef(printTask, startPrintTask, osPriorityNormal, 0, 1024, printTaskBuffer, &printTaskControlBlock);
+  printTaskHandle = osThreadCreate(osThread(printTask), NULL);
 
   /* definition and creation of idleTask */
-  osThreadStaticDef(idleTask, startIdleTask, osPriorityIdle, 0, 128, idleTaskBuffer, &idleTaskControlBlock);
+  osThreadStaticDef(idleTask, startIdleTask, osPriorityIdle, 0, 1024, idleTaskBuffer, &idleTaskControlBlock);
   idleTaskHandle = osThreadCreate(osThread(idleTask), NULL);
 
   /* definition and creation of serviceGcanTask */
-  osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityNormal, 0, 128, serviceGcanBuffer, &serviceGcanControlBlock);
+  osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityNormal, 0, 1024, serviceGcanBuffer, &serviceGcanControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -379,13 +380,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, Gsense_Pin|Heartbeat_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, Gsense_Pin|Heartbeat_Pin|Fault_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Gsense_Pin Heartbeat_Pin */
-  GPIO_InitStruct.Pin = Gsense_Pin|Heartbeat_Pin;
+  /*Configure GPIO pins : Gsense_Pin Heartbeat_Pin Fault_Pin */
+  GPIO_InitStruct.Pin = Gsense_Pin|Heartbeat_Pin|Fault_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -406,20 +407,24 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Header_startPrintTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
+  * @brief  Function implementing the printTask thread.
   * @param  argument: Not used
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+/* USER CODE END Header_startPrintTask */
+void startPrintTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    printf("\e[1;1H\e[2J");
+
+    printf("soe: %f\n", soeByOCV_percent.data);
+    // printf("SYSCLK: %lu Hz\n", HAL_RCC_GetSysClockFreq());
+    osDelay(1000);
   }
   /* USER CODE END 5 */
 }
@@ -454,11 +459,22 @@ void startIdleTask(void const * argument)
 void startServiceGcanTask(void const * argument)
 {
   /* USER CODE BEGIN startServiceGcanTask */
+  init_can(&hcan2, GCAN0);
+  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
   /* Infinite loop */
   for(;;)
   {
+
     service_can_rx_buffer();
-    osDelay(1);
+    // static float testVal = 0.0f;
+    // testVal += 0.1f;
+    // if(testVal > 1000.0f){
+    //   testVal = 0.0f;
+    // }
+    // update_and_queue_param_float(&soeByOCV_percent,testVal);
+
+    // service_can_tx(&hcan2);
+    osDelay(40);
   }
   /* USER CODE END startServiceGcanTask */
 }
