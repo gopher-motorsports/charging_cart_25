@@ -58,6 +58,9 @@ osStaticThreadDef_t idleTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
 uint32_t serviceGcanBuffer[ 1024 ];
 osStaticThreadDef_t serviceGcanControlBlock;
+osThreadId sdcHandle;
+uint32_t sdcBuffer[ 1024 ];
+osStaticThreadDef_t sdcControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -71,6 +74,7 @@ static void MX_USART1_UART_Init(void);
 void startPrintTask(void const * argument);
 void startIdleTask(void const * argument);
 void startServiceGcanTask(void const * argument);
+void startSdc(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -171,6 +175,10 @@ int main(void)
   /* definition and creation of serviceGcanTask */
   osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityNormal, 0, 1024, serviceGcanBuffer, &serviceGcanControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
+
+  /* definition and creation of sdc */
+  osThreadStaticDef(sdc, startSdc, osPriorityIdle, 0, 1024, sdcBuffer, &sdcControlBlock);
+  sdcHandle = osThreadCreate(osThread(sdc), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -399,6 +407,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : SDC1_Pin SDC2_Pin SDC3_Pin SDC4_Pin */
+  GPIO_InitStruct.Pin = SDC1_Pin|SDC2_Pin|SDC3_Pin|SDC4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
@@ -477,6 +491,24 @@ void startServiceGcanTask(void const * argument)
     osDelay(40);
   }
   /* USER CODE END startServiceGcanTask */
+}
+
+/* USER CODE BEGIN Header_startSdc */
+/**
+* @brief Function implementing the sdc thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startSdc */
+void startSdc(void const * argument)
+{
+  /* USER CODE BEGIN startSdc */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END startSdc */
 }
 
 /**
