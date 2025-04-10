@@ -50,6 +50,9 @@ file(GLOB MAIN_SOURCES
     "${CMAKE_SOURCE_DIR}/Core/Src/*.c"
 )
 
+# Exclude system_stm32f4xx.c to avoid duplicate definition
+list(REMOVE_ITEM MAIN_SOURCES "${CMAKE_SOURCE_DIR}/Core/Src/system_stm32f4xx.c")
+
 # Gather all gophercan source files
 file(GLOB GOPHERCAN_SOURCES
     "${CMAKE_SOURCE_DIR}/../gophercan-lib/*.c"

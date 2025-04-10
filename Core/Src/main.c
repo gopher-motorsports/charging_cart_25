@@ -58,6 +58,9 @@ osStaticThreadDef_t idleTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
 uint32_t serviceGcanBuffer[ 1024 ];
 osStaticThreadDef_t serviceGcanControlBlock;
+osThreadId chargestatusHandle;
+uint32_t chargestatusBuffer[ 1024 ];
+osStaticThreadDef_t chargestatusControlBlock;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -71,6 +74,7 @@ static void MX_USART1_UART_Init(void);
 void startPrintTask(void const * argument);
 void startIdleTask(void const * argument);
 void startServiceGcanTask(void const * argument);
+void startchargestatus(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -171,6 +175,10 @@ int main(void)
   /* definition and creation of serviceGcanTask */
   osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityNormal, 0, 1024, serviceGcanBuffer, &serviceGcanControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
+
+  /* definition and creation of chargestatus */
+  osThreadStaticDef(chargestatus, startchargestatus, osPriorityIdle, 0, 1024, chargestatusBuffer, &chargestatusControlBlock);
+  chargestatusHandle = osThreadCreate(osThread(chargestatus), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -383,7 +391,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, Gsense_Pin|Heartbeat_Pin|Fault_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED1_Pin|LED2_Pin|LED3_Pin|LED4_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : Gsense_Pin Heartbeat_Pin Fault_Pin */
   GPIO_InitStruct.Pin = Gsense_Pin|Heartbeat_Pin|Fault_Pin;
@@ -392,12 +400,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED1_Pin */
-  GPIO_InitStruct.Pin = LED1_Pin;
+  /*Configure GPIO pins : LED1_Pin LED2_Pin LED3_Pin LED4_Pin */
+  GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin|LED3_Pin|LED4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -477,6 +485,24 @@ void startServiceGcanTask(void const * argument)
     osDelay(40);
   }
   /* USER CODE END startServiceGcanTask */
+}
+
+/* USER CODE BEGIN Header_startchargestatus */
+/**
+* @brief Function implementing the chargestatus thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startchargestatus */
+void startchargestatus(void const * argument)
+{
+  /* USER CODE BEGIN startchargestatus */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END startchargestatus */
 }
 
 /**
