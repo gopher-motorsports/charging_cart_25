@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "idleTask.h"
+#include "sdc.h"
 #include "GopherCAN.h"
 #include "gopher_sense.h"
 /* USER CODE END Includes */
@@ -480,14 +481,11 @@ void startServiceGcanTask(void const * argument)
   {
 
     service_can_rx_buffer();
-    // static float testVal = 0.0f;
-    // testVal += 0.1f;
-    // if(testVal > 1000.0f){
-    //   testVal = 0.0f;
-    // }
-    // update_and_queue_param_float(&soeByOCV_percent,testVal);
 
-    // service_can_tx(&hcan2);
+    // uint8_t stat = 0;
+    // update_and_queue_param_u8(&sdcStatus1,stat);
+    service_can_tx(&hcan2);
+
     osDelay(40);
   }
   /* USER CODE END startServiceGcanTask */
@@ -503,9 +501,11 @@ void startServiceGcanTask(void const * argument)
 void startSdc(void const * argument)
 {
   /* USER CODE BEGIN startSdc */
+  initSdc();
   /* Infinite loop */
   for(;;)
   {
+    runSdc();
     osDelay(1);
   }
   /* USER CODE END startSdc */

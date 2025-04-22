@@ -30,12 +30,16 @@ void runIdleTask(){
         }
     }
 
-    // //printf("soe : %lu\n", soeByOCV_percent.data);
+    // printf("soe : %lu\n", soeByOCV_percent.data);
     // printf("\e[1;1H\e[2J");
     // printf("hello world\n");
     // printf("soe: %f\n", 3.14f);
-    
 
+    // For debugging sdcStatus
+    printf("\e[1;1H\e[2J");
+    printf("SDC Status:\n");
+    printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus1.data, sdcStatus2.data, sdcStatus3.data, sdcStatus4.data);   
+    osDelay(500);
 
 
     if(soeByOCV_percent.data == 100){
