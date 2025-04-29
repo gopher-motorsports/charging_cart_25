@@ -63,6 +63,8 @@ void Error_Handler(void);
 #define Heartbeat_GPIO_Port GPIOC
 #define Fault_Pin GPIO_PIN_2
 #define Fault_GPIO_Port GPIOC
+#define CP_EN_Pin GPIO_PIN_3
+#define CP_EN_GPIO_Port GPIOC
 #define LED1_Pin GPIO_PIN_3
 #define LED1_GPIO_Port GPIOA
 #define SDC1_Pin GPIO_PIN_6
@@ -73,6 +75,8 @@ void Error_Handler(void);
 #define SDC3_GPIO_Port GPIOC
 #define SDC4_Pin GPIO_PIN_9
 #define SDC4_GPIO_Port GPIOC
+#define CP_PWM_Pin GPIO_PIN_7
+#define CP_PWM_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

@@ -1,10 +1,10 @@
 # Hardware config for Battery Management System Go4-23e
-module_name: "CIB"
+module_name: "CCB"
 use_hw_timer: false # Disable hw timer based DMA update
 
 buckets:
     # Current Sensor ADCs
-    high_frequency_cib:
+    high_frequency_ccb:
         frequency_hz: 250
         parameters:
             bmsTractiveSystemCurrentLow_A:
@@ -16,7 +16,7 @@ buckets:
                 sensor: current_sensor_2
                 samples_buffered: 1
     
-    medium_frequency_cib:
+    medium_frequency_ccb:
         frequency_hz: 25
         parameters:
             soeByOCV_percent:
@@ -75,10 +75,10 @@ buckets:
                 sensor: NON_ADC
                 samples_buffered: 1
 
-    low_frequency_cib:
+    low_frequency_ccb:
         frequency_hz: 4
         parameters:
-            # Charger Interface Board
+            # Charger Control Board
             sdcStatus1:
                 ADC: NON_ADC
                 sensor: NON_ADC
