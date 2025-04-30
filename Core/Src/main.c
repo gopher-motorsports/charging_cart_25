@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "idleTask.h"
+#include "j1772.h"
 #include "sdc.h"
 #include "GopherCAN.h"
 #include "gopher_sense.h"
@@ -199,6 +200,13 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+
+  init_can(&hcan2, GCAN0);
+  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+
+
+  // Set CP_EN to low (disabled) by default
+  HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
 
   // Start J1772 PWM input capture
   HAL_TIM_IC_Start(&htim4, TIM_CHANNEL_1);
@@ -656,8 +664,7 @@ void startIdleTask(void const * argument)
 void startServiceGcanTask(void const * argument)
 {
   /* USER CODE BEGIN startServiceGcanTask */
-  init_can(&hcan2, GCAN0);
-  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+
   /* Infinite loop */
   for(;;)
   {
@@ -703,9 +710,11 @@ void startSdc(void const * argument)
 void startJ1772(void const * argument)
 {
   /* USER CODE BEGIN startJ1772 */
+  chargingData_S chargingData;
   /* Infinite loop */
   for(;;)
   {
+    getJ1772Status(&chargingData);
     osDelay(1);
   }
   /* USER CODE END startJ1772 */
