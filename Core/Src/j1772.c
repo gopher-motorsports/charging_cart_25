@@ -12,8 +12,8 @@
 // J1772 charging Control Pilot (CP) signal standard values
 // J1772 generates a 1 kHz full cycle CP PWM signal
 
-// Timeout of CP PWM signal in microseconds
-#define CP_PWM_TIMOUT_MICROSEC   (100000U)
+// Timeout of CP PWM signal in milliseconds
+#define CP_PWM_TIMOUT_MICROSEC   (100U)
 
 // Maximum continuous ampere rating is 0.6 A per 10 us of high time for PWM signal 
 #define CP_CURRENT_PER_MICROSEC   (0.06f)  // 0.6 A per 10 us = 0.06 A per 1 us
@@ -61,7 +61,7 @@ extern volatile uint32_t cpLastUpdate;
 void getJ1772Status(chargingData_S *chargingData)
 {
 
-    if((HAL_GetTick() - cpLastUpdate) < CP_PWM_TIMOUT_MICROSEC)
+    if((HAL_GetTick() - cpLastUpdate) < CP_PWM_TIMOUT_MICROSEC && cpLastUpdate != 0)
 	{
 		// HAL GPIO -> ENABLE CP
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_SET);
