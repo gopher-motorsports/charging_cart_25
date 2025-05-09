@@ -483,7 +483,7 @@ void startServiceGcanTask(void const * argument)
     service_can_rx_buffer();
 
     // uint8_t stat = 0;
-    // update_and_queue_param_u8(&sdcStatus1,stat);
+    // update_and_queue_param_u8(&sdcStatus18,stat);
     service_can_tx(&hcan2);
 
     osDelay(40);

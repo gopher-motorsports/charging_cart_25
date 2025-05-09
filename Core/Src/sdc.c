@@ -22,10 +22,9 @@ void runSdc(){
     statSDC3 = HAL_GPIO_ReadPin(SDC3_GPIO_Port,SDC3_Pin);
     statSDC4 = HAL_GPIO_ReadPin(SDC4_GPIO_Port,SDC4_Pin);
 
-    update_and_queue_param_u8(&sdcStatus1,statSDC1);
-    update_and_queue_param_u8(&sdcStatus2,statSDC2);
-    update_and_queue_param_u8(&sdcStatus3,statSDC3);
-    update_and_queue_param_u8(&sdcStatus4,statSDC4);
+    update_and_queue_param_u8(&sdcStatus18,statSDC1);
+    update_and_queue_param_u8(&sdcStatus19,statSDC2);
+    update_and_queue_param_u8(&sdcStatus20,statSDC3);
 
 
 }

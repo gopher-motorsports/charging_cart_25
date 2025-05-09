@@ -79,22 +79,17 @@ buckets:
         frequency_hz: 4
         parameters:
             # Charger Interface Board
-            sdcStatus1:
+            sdcStatus18:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            sdcStatus2:
+            sdcStatus18:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            sdcStatus3:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-            sdcStatus4:
+            sdcStatus19:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
