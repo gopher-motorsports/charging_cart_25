@@ -13,7 +13,7 @@
 // J1772 generates a 1 kHz full cycle CP PWM signal
 
 // Timeout of CP PWM signal in milliseconds
-#define CP_PWM_TIMOUT_MICROSEC   (100U)
+#define CP_PWM_TIMOUT_MICROSEC   (10U)
 
 // Maximum continuous ampere rating is 0.6 A per 10 us of high time for PWM signal 
 #define CP_CURRENT_PER_MICROSEC   (0.06f)  // 0.6 A per 10 us = 0.06 A per 1 us
@@ -23,8 +23,8 @@
 #define CP_MAX_HIGH_TIME_MICROSEC    (850U)
 
 // Standard voltage for J1772 AC level 1 and 2 charging
-#define STANDARD_LVL1_VOLT (120U)
-#define STANDARD_LVL2_VOLT (208U)
+#define STANDARD_LVL1_VOLT (120.0f)
+#define STANDARD_LVL2_VOLT (208.0f)
 
 // Maximum current for J1772 AC level 1 charging
 #define STANDARD_LVL1_AMP (16U)
@@ -112,7 +112,7 @@ void getJ1772Status(chargingData_S *chargingData)
     }
 
     // Send charging power limit to BMS over CAN
-    update_and_queue_param_u16(&chargingPowerLimit,chargingData->powerLimit);
+    update_and_queue_param_float(&chargingPowerLimit,chargingData->powerLimit);
 
 }
 

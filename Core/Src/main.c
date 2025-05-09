@@ -76,6 +76,7 @@ volatile uint32_t cpFrequency;
 volatile uint32_t cpHighTime;
 volatile uint32_t cpDutyCycle;
 volatile uint32_t cpLastUpdate;
+chargingData_S chargingData;
 
 /* USER CODE END PV */
 
@@ -202,7 +203,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   init_can(&hcan2, GCAN0);
-  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+  gsense_init(&hcan2, Gsense_GPIO_Port, Gsense_Pin);
 
 
   // Set CP_EN to low (disabled) by default
@@ -625,9 +626,9 @@ void startPrintTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    printf("\e[1;1H\e[2J");
+    // printf("\e[1;1H\e[2J");
 
-    printf("soe: %f\n", soeByOCV_percent.data);
+    // printf("soe: %f\n", soeByOCV_percent.data);
     // printf("SYSCLK: %lu Hz\n", HAL_RCC_GetSysClockFreq());
     osDelay(1000);
   }
@@ -675,7 +676,7 @@ void startServiceGcanTask(void const * argument)
     // update_and_queue_param_u8(&sdcStatus1,stat);
     service_can_tx(&hcan2);
 
-    osDelay(40);
+    osDelay(1);
   }
   /* USER CODE END startServiceGcanTask */
 }
@@ -710,11 +711,15 @@ void startSdc(void const * argument)
 void startJ1772(void const * argument)
 {
   /* USER CODE BEGIN startJ1772 */
-  chargingData_S chargingData;
+
   /* Infinite loop */
   for(;;)
   {
-    getJ1772Status(&chargingData);
+    chargingData_S chargingDataLocal;
+    getJ1772Status(&chargingDataLocal);
+    vTaskSuspendAll();
+    chargingData = chargingDataLocal;
+    xTaskResumeAll();
     osDelay(1);
   }
   /* USER CODE END startJ1772 */

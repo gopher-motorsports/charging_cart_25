@@ -42,13 +42,19 @@ void runIdleTask(){
     // osDelay(500);
 
     // For debugging J1772
-    printf("\e[1;1H\e[2J");
-    printf("Charging Power Limit: %u\n", chargingPowerLimit.data);
-    osDelay(500);
-
-
-    if(soeByOCV_percent.data == 100){
-        HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
+    static uint32_t lastUpdate = 0;
+    if((HAL_GetTick() - lastUpdate) > 500){
+        printf("\e[1;1H\e[2J");
+        printf("Max Ampactiy: %f\n", chargingData.maxAmpacity);
+        printf("Charging Power Limit: %f\n", chargingPowerLimit.data);
+        // osDelay(500);
+        lastUpdate = HAL_GetTick();
     }
+
+
+
+    // if(soeByOCV_percent.data == 100){
+    //     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
+    // }
     
 }

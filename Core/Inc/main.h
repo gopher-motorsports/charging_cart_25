@@ -32,6 +32,8 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "j1772.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -79,6 +81,8 @@ void Error_Handler(void);
 #define CP_PWM_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
+
+extern chargingData_S chargingData;
 
 /* USER CODE END Private defines */
 

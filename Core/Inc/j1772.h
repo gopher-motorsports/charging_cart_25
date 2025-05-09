@@ -15,7 +15,7 @@
 typedef struct
 {
     float maxAmpacity; // in Amps
-    uint16_t powerLimit; // in Watts
+    float powerLimit; // in Watts
 } chargingData_S;
 
 /* ==================================================================== */

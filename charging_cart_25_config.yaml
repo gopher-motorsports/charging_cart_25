@@ -10,11 +10,6 @@ buckets:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
-            bmsTractiveSystemCurrentLow_A:
-                ADC: ADC1_IN1
-                sensor: current_sensor_1
-                samples_buffered: 1
-                # if you delete all ADC parameters, need to change gsense_init function
 
 
     low_frequency_ccb:
