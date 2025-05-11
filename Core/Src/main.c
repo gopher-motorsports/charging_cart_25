@@ -475,7 +475,7 @@ void startServiceGcanTask(void const * argument)
 {
   /* USER CODE BEGIN startServiceGcanTask */
   init_can(&hcan2, GCAN0);
-  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+  gsense_init(&hcan2, Gsense_GPIO_Port, Gsense_Pin);
   /* Infinite loop */
   for(;;)
   {

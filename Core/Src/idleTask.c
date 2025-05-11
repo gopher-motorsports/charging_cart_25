@@ -38,7 +38,7 @@ void runIdleTask(){
     // For debugging sdcStatus
     printf("\e[1;1H\e[2J");
     printf("SDC Status:\n");
-    printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus18.data, sdcStatus19.data, sdcStatus20.data);
+    printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus17.data, sdcStatus18.data, sdcStatus19.data);
     osDelay(500);
 
 
