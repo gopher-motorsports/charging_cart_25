@@ -49,6 +49,8 @@ extern volatile uint32_t cpHighTime;
 extern volatile uint32_t cpDutyCycle;
 extern volatile uint32_t cpLastUpdate;
 
+extern CAN_HandleTypeDef hcan2;
+
 /* ==================================================================== */
 /* =================== GLOBAL FUNCTION DEFINITIONS ==================== */
 /* ==================================================================== */
@@ -113,6 +115,7 @@ void getJ1772Status(chargingData_S *chargingData)
 
     // Send charging power limit to BMS over CAN
     update_and_queue_param_float(&chargingPowerLimit,chargingData->powerLimit);
+    service_can_tx(&hcan2);
 
 }
 
