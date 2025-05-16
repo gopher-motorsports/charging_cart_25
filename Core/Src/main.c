@@ -500,6 +500,9 @@ void startchargestatus(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    red_LED();
+    green_LED();
+
     osDelay(1);
   }
   /* USER CODE END startchargestatus */

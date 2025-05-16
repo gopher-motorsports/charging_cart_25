@@ -18,5 +18,6 @@
 
 void initStatus_LEDs();
 void red_LED(int state);
+void green_LED(int state);
 
 #endif
