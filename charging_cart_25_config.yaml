@@ -4,7 +4,7 @@ use_hw_timer: false # Disable hw timer based DMA update
 
 buckets:
     high_frequency_ccb:
-        frequency_hz: 100
+        frequency_hz: 10
         parameters:
             chargingPowerLimit:
                 ADC: NON_ADC
