@@ -25,7 +25,7 @@ uint8_t red_LED(void){
 	bmsChargerInputVoltageErrorAlert_state.data&&
 	bmsChargerBatteryNotDetectedErrorAlert_state.data&&
 	bmsChargerCommunicationErrorAlert_state.data)){
-		return 0
+		return 0;
 	}
 }
 
