@@ -1,8 +1,18 @@
 #include <stdint.h>
+#include <stdio.h>
 #include "main.h"
 #include "status_led.h"
-#include <stdio.h>
 #include "GopherCAN.h"
+#include "GopherCAN_config.h"
+
+extern TIM_HandleTypeDef htim2;
+
+void initStatus_LEDs(void){
+    HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin, GPIO_PIN_RESET); // green 
+    HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, GPIO_PIN_RESET); // yellow
+    HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin, GPIO_PIN_RESET); // red
+    HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin, GPIO_PIN_RESET); // blue
+}
 
 uint8_t red_LED(void){
 	if (bmsChargerOverVoltageAlert_state.data||
@@ -31,8 +41,11 @@ uint8_t red_LED(void){
 
 
 uint8_t green_LED(void) {
-	int CP = HAL_GPIO_ReadPin(CP_EN_GPIO_Port, CP_EN_Pin);//use different can message from bms
-	if (!sdcStatus1.data&&!sdcStatus2.data&&!sdcStatus3.data&&!sdcStatus4.data&&CP){
+	if (!sdcStatus1.data&&
+        !sdcStatus2.data&&
+        !sdcStatus3.data&&
+        !sdcStatus4.data&&
+        chargerStatusByte.data){
 		return 1;
 	} 
 	else{
@@ -40,6 +53,16 @@ uint8_t green_LED(void) {
 	}
 	return 0;
 }
+
+volatile uint8_t toggle = 0;
+void buzzer(void){
+    HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,1);
+    toggle = 1;
+    __HAL_TIM_SET_COUNTER(&htim2,0);
+    HAL_TIM_Base_Start(&htim2);
+}
+
+void HAL_PERIOD_Elapsed_Callback
 
 void check_LEDs(void){
 	if (red_LED()) {

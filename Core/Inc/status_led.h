@@ -16,6 +16,7 @@
 /* =================== GLOBAL FUNCTION DECLARATIONS =================== */
 /* ==================================================================== */
 
+void initStatus_LEDs();
 uint8_t red_LED();
 uint8_t green_LED();
 void check_LEDs();
