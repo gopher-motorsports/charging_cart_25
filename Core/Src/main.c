@@ -795,10 +795,13 @@ void Startstatus_led(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+    initStatus_LEDs();
+    check_LEDs();
+  }
     osDelay(1);
   }
   /* USER CODE END Startstatus_led */
-}
+
 
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -817,7 +820,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM2) {
+        HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET); // buzzer off
+        HAL_TIM_Base_Stop_IT(htim); //only run once
+  }
   /* USER CODE END Callback 1 */
 }
 

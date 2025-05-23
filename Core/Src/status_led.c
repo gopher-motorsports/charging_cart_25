@@ -26,17 +26,7 @@ uint8_t red_LED(void){
 	bmsChargerCommunicationErrorAlert_state.data){
 		return 1;
 	}
-	else if (!(bmsChargerOverVoltageAlert_state.data&&
-	bmsChargerOverCurrentAlert_state.data&&
-	bmsChargerVoltageMismatchAlert_state.data&&
-	bmsChargerCurrentMismatchAlert_state.data&&
-	bmsChargerHardwareFailureAlert_state.data&&
-	bmsChargerOverTempAlert_state.data&&
-	bmsChargerInputVoltageErrorAlert_state.data&&
-	bmsChargerBatteryNotDetectedErrorAlert_state.data&&
-	bmsChargerCommunicationErrorAlert_state.data)){
-		return 0;
-	}
+	return 0;
 }
 
 
@@ -48,9 +38,6 @@ uint8_t green_LED(void) {
         chargerStatusByte.data){
 		return 1;
 	} 
-	else{
-		HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, 0);
-	}
 	return 0;
 }
 
@@ -58,11 +45,9 @@ volatile uint8_t toggle = 0;
 void buzzer(void){
     HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,1);
     toggle = 1;
-    __HAL_TIM_SET_COUNTER(&htim2,0);
-    HAL_TIM_Base_Start(&htim2);
+    __HAL_TIM_SET_COUNTER(&htim2,0); // reset
+    HAL_TIM_Base_Start_IT(&htim2); //start interrupt
 }
-
-void HAL_PERIOD_Elapsed_Callback
 
 void check_LEDs(void){
 	if (red_LED()) {
