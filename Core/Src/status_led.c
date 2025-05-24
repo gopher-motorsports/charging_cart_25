@@ -15,15 +15,16 @@ void initStatus_LEDs(void){
 }
 
 uint8_t red_LED(void){
-	if (bmsChargerOverVoltageAlert_state.data||
-	bmsChargerOverCurrentAlert_state.data||
-	bmsChargerVoltageMismatchAlert_state.data||
-	bmsChargerCurrentMismatchAlert_state.data||
-	bmsChargerHardwareFailureAlert_state.data||
-	bmsChargerOverTempAlert_state.data||
-	bmsChargerInputVoltageErrorAlert_state.data||
-	bmsChargerBatteryNotDetectedErrorAlert_state.data||
-	bmsChargerCommunicationErrorAlert_state.data){
+	if (//bmsChargerOverVoltageAlert_state.data||
+	//bmsChargerOverCurrentAlert_state.data||
+	//bmsChargerVoltageMismatchAlert_state.data||
+	//bmsChargerCurrentMismatchAlert_state.data||
+	//bmsChargerHardwareFailureAlert_state.data||
+	//bmsChargerOverTempAlert_state.data||
+	//bmsChargerInputVoltageErrorAlert_state.data||
+	//bmsChargerBatteryNotDetectedErrorAlert_state.data||
+	//bmsChargerCommunicationErrorAlert_state.data
+    0){
 		return 1;
 	}
 	return 0;
@@ -31,11 +32,12 @@ uint8_t red_LED(void){
 
 
 uint8_t green_LED(void) {
-	if (!sdcStatus1.data&&
-        !sdcStatus2.data&&
-        !sdcStatus3.data&&
-        !sdcStatus4.data&&
-        chargerStatusByte.data){
+	if (//!sdcStatus1.data&&
+        //!sdcStatus2.data&&
+        //!sdcStatus3.data&&
+        //!sdcStatus4.data&&
+        //chargerStatusByte.data
+        1){
 		return 1;
 	} 
 	return 0;
