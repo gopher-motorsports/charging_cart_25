@@ -83,6 +83,8 @@ volatile uint32_t cpDutyCycle;
 volatile uint32_t cpLastUpdate;
 chargingData_S chargingData;
 
+uint8_t buzzer_toggle = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -486,9 +488,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
+  htim2.Init.Prescaler = 29297;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
+  htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -792,16 +794,15 @@ void startJ1772(void const * argument)
 void Startstatus_led(void const * argument)
 {
   /* USER CODE BEGIN Startstatus_led */
+  initStatus_LEDs();
   /* Infinite loop */
   for(;;)
   {
-    initStatus_LEDs();
     check_LEDs();
-  }
     osDelay(1);
   }
+  }
   /* USER CODE END Startstatus_led */
-
 
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -821,8 +822,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM2) {
-        HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET); // buzzer off
-        HAL_TIM_Base_Stop_IT(htim); //only run once
+        HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0); // buzzer off
+        buzzer_toggle = 0;
   }
   /* USER CODE END Callback 1 */
 }
