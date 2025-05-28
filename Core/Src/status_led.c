@@ -25,15 +25,26 @@ uint8_t red_LED(void){
 	//bmsChargerInputVoltageErrorAlert_state.data||
 	//bmsChargerBatteryNotDetectedErrorAlert_state.data||
 	//bmsChargerCommunicationErrorAlert_state.data
-		1){
+		0){
 		return 1;
 	}
 	return 0;
 }
 
+uint8_t yellow_LED(void){
+	if(//sdcStatus1.data&&
+	   //sdcStatus2.data&&
+	   //sdcStatus3.data&&
+	   //sdcStatus4.data&&
+	   //chargerStatusByte.data
+	   1){
+		return 1;
+	   }
+	return 0;
+}
 
-uint8_t green_LED(void) {
-	if (//!sdcStatus1.data&&
+uint8_t green_LED(void){
+	if(//!sdcStatus1.data&&
         //!sdcStatus2.data&&
         //!sdcStatus3.data&&
         //!sdcStatus4.data&&
@@ -52,13 +63,15 @@ void buzzer(void){
 	}
 	
 
-void check_LEDs(void) {
-    static uint8_t last_error_state = 0;
+void check_LEDs(void){
+    static uint8_t last_error = 0;
+	uint8_t ready_state = green_LED();
+	uint8_t standby_state = yellow_LED();
     uint8_t current_error = red_LED();
 
     if(current_error){
         HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
-        if (!last_error_state) {
+        if (!last_error) {
             buzzer();
         }
     }
@@ -66,13 +79,20 @@ void check_LEDs(void) {
 		HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
 	}
 
-    if(green_LED()){
+    if(ready_state && !current_error && !standby_state){
         HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 1);  // green on
     }
 	else{
 		HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, 0);
 	}
+
+	if (standby_state && !current_error && !ready_state){
+		HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, 1);
+	}
+	else{
+		HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin, 0);
+	}
 		
-	last_error_state = current_error;
+	last_error = current_error;
 	
 }
