@@ -16,30 +16,17 @@ buckets:
         frequency_hz: 4
         parameters:
             # Shut down circuit sensing
-            sdcStatus1:
+            sdcStatus17:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            sdcStatus2:
+            sdcStatus18:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
 
-            sdcStatus3:
+            sdcStatus19:
                 ADC: NON_ADC
                 sensor: NON_ADC
                 samples_buffered: 1
-
-            sdcStatus4:
-                ADC: NON_ADC
-                sensor: NON_ADC
-                samples_buffered: 1
-
-
-
-
-
-
-
-                
