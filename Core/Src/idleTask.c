@@ -51,16 +51,5 @@ void runIdleTask(){
         lastUpdate = HAL_GetTick();
     }
 
-
-
-    // if(soeByOCV_percent.data == 100){
-    //     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
-    // }
-
-    // debugging LEDs - SET the pin to turn LED on
-    HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // turn on green led
-    HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // turn on yellow led
-    HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET); // turn on red led
-    HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
     
 }
