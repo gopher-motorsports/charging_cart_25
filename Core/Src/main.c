@@ -25,6 +25,7 @@
 #include "idleTask.h"
 #include "j1772.h"
 #include "sdc.h"
+#include "status_led.h"
 #include "GopherCAN.h"
 #include "gopher_sense.h"
 /* USER CODE END Includes */
@@ -50,6 +51,7 @@ ADC_HandleTypeDef hadc1;
 CAN_HandleTypeDef hcan2;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart1;
@@ -69,6 +71,9 @@ osStaticThreadDef_t sdcControlBlock;
 osThreadId j1772Handle;
 uint32_t j1772Buffer[ 1024 ];
 osStaticThreadDef_t j1772ControlBlock;
+osThreadId status_ledHandle;
+uint32_t status_ledBuffer[ 1024 ];
+osStaticThreadDef_t status_ledControlBlock;
 /* USER CODE BEGIN PV */
 
 // J1772 Control Pilot (CP) PWM status variables
@@ -77,6 +82,8 @@ volatile uint32_t cpHighTime;
 volatile uint32_t cpDutyCycle;
 volatile uint32_t cpLastUpdate;
 chargingData_S chargingData;
+
+uint8_t buzzer_toggle = 0;
 
 /* USER CODE END PV */
 
@@ -88,11 +95,13 @@ static void MX_CAN2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM2_Init(void);
 void startPrintTask(void const * argument);
 void startIdleTask(void const * argument);
 void startServiceGcanTask(void const * argument);
 void startSdc(void const * argument);
 void startJ1772(void const * argument);
+void Startstatus_led(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -200,6 +209,7 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM1_Init();
   MX_TIM4_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   init_can(&hcan2, GCAN0);
@@ -251,6 +261,10 @@ int main(void)
   /* definition and creation of j1772 */
   osThreadStaticDef(j1772, startJ1772, osPriorityNormal, 0, 1024, j1772Buffer, &j1772ControlBlock);
   j1772Handle = osThreadCreate(osThread(j1772), NULL);
+
+  /* definition and creation of status_led */
+  osThreadStaticDef(status_led, Startstatus_led, osPriorityIdle, 0, 1024, status_ledBuffer, &status_ledControlBlock);
+  status_ledHandle = osThreadCreate(osThread(status_led), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -452,6 +466,51 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 29297;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 65535;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -726,6 +785,26 @@ void startJ1772(void const * argument)
   /* USER CODE END startJ1772 */
 }
 
+/* USER CODE BEGIN Header_Startstatus_led */
+/**
+* @brief Function implementing the status_led thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_Startstatus_led */
+void Startstatus_led(void const * argument)
+{
+  /* USER CODE BEGIN Startstatus_led */
+  initStatus_LEDs();
+  /* Infinite loop */
+  for(;;)
+  {
+    check_LEDs();
+    osDelay(1);
+  }
+  }
+  /* USER CODE END Startstatus_led */
+
 /**
   * @brief  Period elapsed callback in non blocking mode
   * @note   This function is called  when TIM6 interrupt took place, inside
@@ -743,7 +822,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM2) {
+        HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, 0); // buzzer off
+        buzzer_toggle = 0;
+  }
   /* USER CODE END Callback 1 */
 }
 
