@@ -30,16 +30,37 @@ void runIdleTask(){
         }
     }
 
-    // //printf("soe : %lu\n", soeByOCV_percent.data);
+    // printf("soe : %lu\n", soeByOCV_percent.data);
     // printf("\e[1;1H\e[2J");
     // printf("hello world\n");
     // printf("soe: %f\n", 3.14f);
-    
 
+    // For debugging sdcStatus
+    // printf("\e[1;1H\e[2J");
+    // printf("SDC Status:\n");
+    // printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus17.data, sdcStatus18.data, sdcStatus19.data);   
+    // osDelay(500);
 
-
-    if(soeByOCV_percent.data == 100){
-        HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
+    // For debugging J1772
+    static uint32_t lastUpdate = 0;
+    if((HAL_GetTick() - lastUpdate) > 500){
+        printf("\e[1;1H\e[2J");
+        printf("Max Ampactiy: %f\n", chargingData.maxAmpacity);
+        printf("Charging Power Limit: %f\n", chargingPowerLimit.data);
+        // osDelay(500);
+        lastUpdate = HAL_GetTick();
     }
+
+
+
+    // if(soeByOCV_percent.data == 100){
+    //     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
+    // }
+
+    // debugging LEDs - SET the pin to turn LED on
+    HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // turn on green led
+    HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // turn on yellow led
+    HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET); // turn on red led
+    HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
     
 }

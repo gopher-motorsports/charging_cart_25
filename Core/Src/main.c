@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "idleTask.h"
+#include "j1772.h"
+#include "sdc.h"
 #include "GopherCAN.h"
 #include "gopher_sense.h"
 /* USER CODE END Includes */
@@ -47,6 +49,9 @@ ADC_HandleTypeDef hadc1;
 
 CAN_HandleTypeDef hcan2;
 
+TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim4;
+
 UART_HandleTypeDef huart1;
 
 osThreadId printTaskHandle;
@@ -58,7 +63,20 @@ osStaticThreadDef_t idleTaskControlBlock;
 osThreadId serviceGcanTaskHandle;
 uint32_t serviceGcanBuffer[ 1024 ];
 osStaticThreadDef_t serviceGcanControlBlock;
+osThreadId sdcHandle;
+uint32_t sdcBuffer[ 1024 ];
+osStaticThreadDef_t sdcControlBlock;
+osThreadId j1772Handle;
+uint32_t j1772Buffer[ 1024 ];
+osStaticThreadDef_t j1772ControlBlock;
 /* USER CODE BEGIN PV */
+
+// J1772 Control Pilot (CP) PWM status variables
+volatile uint32_t cpFrequency;
+volatile uint32_t cpHighTime;
+volatile uint32_t cpDutyCycle;
+volatile uint32_t cpLastUpdate;
+chargingData_S chargingData;
 
 /* USER CODE END PV */
 
@@ -68,9 +86,13 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_CAN2_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_TIM1_Init(void);
+static void MX_TIM4_Init(void);
 void startPrintTask(void const * argument);
 void startIdleTask(void const * argument);
 void startServiceGcanTask(void const * argument);
+void startSdc(void const * argument);
+void startJ1772(void const * argument);
 
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
@@ -104,6 +126,43 @@ GETCHAR_PROTOTYPE
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+/*!
+  @brief   Interrupt when Timer input capture triggered
+  @param   TIM Handle
+*/
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	// If the interrupt is triggered by channel 2 (rising edge detection)
+  if ((htim == &htim4) && (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2))  
+	{
+    // Record cp update time
+    cpLastUpdate = HAL_GetTick();
+
+		// Read the raw IC value of the timer with rising edge detection (this should be 1000 us (1 ms))
+		uint32_t inputCaptureRaw = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_2);
+    // Prevent divide by 0
+		if(inputCaptureRaw != 0)
+		{
+      // Calculate the signal high time in microseconds
+      // The captured value in channel one contains the timestamp of the falling edge. 
+      // Since the timer is reset on a rising edge this contains the pulse width of the high time.
+      cpHighTime = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+
+			// Calculate the Duty Cycle
+      // This high time value is then divided by inputCaptureRaw - 
+      // which is the period of the PWM cycle in timer ticks to get duty cycle 
+      // (multiply by 100 because duty cycle is a percentage)
+			cpDutyCycle = (HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1) * 100) / inputCaptureRaw;
+
+      // Calculate the Frequency
+      // The timer CLK runs at 2x frequency of PCLK1. This is then divided by the prescalar.
+      uint32_t timerFrequency = (HAL_RCC_GetPCLK1Freq() * 2) / htim4.Init.Prescaler;
+      // Frequency scaling
+			cpFrequency =  timerFrequency / inputCaptureRaw;
+		}
+	}
+}
 
 /* USER CODE END 0 */
 
@@ -139,7 +198,20 @@ int main(void)
   MX_ADC1_Init();
   MX_CAN2_Init();
   MX_USART1_UART_Init();
+  MX_TIM1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+
+  init_can(&hcan2, GCAN0);
+  gsense_init(&hcan2, Gsense_GPIO_Port, Gsense_Pin);
+
+
+  // Set CP_EN to low (disabled) by default
+  HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
+
+  // Start J1772 PWM input capture
+  HAL_TIM_IC_Start(&htim4, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_IT(&htim4, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
 
@@ -171,6 +243,14 @@ int main(void)
   /* definition and creation of serviceGcanTask */
   osThreadStaticDef(serviceGcanTask, startServiceGcanTask, osPriorityNormal, 0, 1024, serviceGcanBuffer, &serviceGcanControlBlock);
   serviceGcanTaskHandle = osThreadCreate(osThread(serviceGcanTask), NULL);
+
+  /* definition and creation of sdc */
+  osThreadStaticDef(sdc, startSdc, osPriorityIdle, 0, 1024, sdcBuffer, &sdcControlBlock);
+  sdcHandle = osThreadCreate(osThread(sdc), NULL);
+
+  /* definition and creation of j1772 */
+  osThreadStaticDef(j1772, startJ1772, osPriorityNormal, 0, 1024, j1772Buffer, &j1772ControlBlock);
+  j1772Handle = osThreadCreate(osThread(j1772), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -330,6 +410,126 @@ static void MX_CAN2_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 0;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 63;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_IC_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_TI2FP2;
+  sSlaveConfig.TriggerPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sSlaveConfig.TriggerPrescaler = TIM_ICPSC_DIV1;
+  sSlaveConfig.TriggerFilter = 0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim4, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_FALLING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_INDIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim4, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  if (HAL_TIM_IC_ConfigChannel(&htim4, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
   * @brief USART1 Initialization Function
   * @param None
   * @retval None
@@ -380,24 +580,30 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, Gsense_Pin|Heartbeat_Pin|Fault_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, Gsense_Pin|Heartbeat_Pin|Fault_Pin|CP_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED1_Pin|LED2_Pin|LED3_Pin|LED4_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Gsense_Pin Heartbeat_Pin Fault_Pin */
-  GPIO_InitStruct.Pin = Gsense_Pin|Heartbeat_Pin|Fault_Pin;
+  /*Configure GPIO pins : Gsense_Pin Heartbeat_Pin Fault_Pin CP_EN_Pin */
+  GPIO_InitStruct.Pin = Gsense_Pin|Heartbeat_Pin|Fault_Pin|CP_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED1_Pin */
-  GPIO_InitStruct.Pin = LED1_Pin;
+  /*Configure GPIO pins : LED1_Pin LED2_Pin LED3_Pin LED4_Pin */
+  GPIO_InitStruct.Pin = LED1_Pin|LED2_Pin|LED3_Pin|LED4_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SDC1_Pin SDC2_Pin SDC3_Pin SDC4_Pin */
+  GPIO_InitStruct.Pin = SDC1_Pin|SDC2_Pin|SDC3_Pin|SDC4_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -420,9 +626,9 @@ void startPrintTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    printf("\e[1;1H\e[2J");
+    // printf("\e[1;1H\e[2J");
 
-    printf("soe: %f\n", soeByOCV_percent.data);
+    // printf("soe: %f\n", soeByOCV_percent.data);
     // printf("SYSCLK: %lu Hz\n", HAL_RCC_GetSysClockFreq());
     osDelay(1000);
   }
@@ -459,24 +665,65 @@ void startIdleTask(void const * argument)
 void startServiceGcanTask(void const * argument)
 {
   /* USER CODE BEGIN startServiceGcanTask */
-  init_can(&hcan2, GCAN0);
-  gsense_init(&hcan2, &hadc1, 0, 0, Gsense_GPIO_Port, Gsense_Pin);
+
   /* Infinite loop */
   for(;;)
   {
 
     service_can_rx_buffer();
-    // static float testVal = 0.0f;
-    // testVal += 0.1f;
-    // if(testVal > 1000.0f){
-    //   testVal = 0.0f;
-    // }
-    // update_and_queue_param_float(&soeByOCV_percent,testVal);
 
-    // service_can_tx(&hcan2);
-    osDelay(40);
+    // uint8_t stat = 0;
+    update_and_queue_param_float(&chargingPowerLimit,chargingData.powerLimit);
+    service_can_tx(&hcan2);
+
+
+    osDelay(1);
   }
   /* USER CODE END startServiceGcanTask */
+}
+
+/* USER CODE BEGIN Header_startSdc */
+/**
+* @brief Function implementing the sdc thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startSdc */
+void startSdc(void const * argument)
+{
+  /* USER CODE BEGIN startSdc */
+  initSdc();
+  /* Infinite loop */
+  for(;;)
+  {
+    runSdc();
+    osDelay(1);
+  }
+  /* USER CODE END startSdc */
+}
+
+/* USER CODE BEGIN Header_startJ1772 */
+/**
+* @brief Function implementing the j1772 thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_startJ1772 */
+void startJ1772(void const * argument)
+{
+  /* USER CODE BEGIN startJ1772 */
+
+  /* Infinite loop */
+  for(;;)
+  {
+    chargingData_S chargingDataLocal;
+    getJ1772Status(&chargingDataLocal);
+    vTaskSuspendAll();
+    chargingData = chargingDataLocal;
+    xTaskResumeAll();
+    osDelay(1);
+  }
+  /* USER CODE END startJ1772 */
 }
 
 /**
