@@ -259,7 +259,7 @@ int main(void)
   sdcHandle = osThreadCreate(osThread(sdc), NULL);
 
   /* definition and creation of j1772 */
-  osThreadStaticDef(j1772, startJ1772, osPriorityIdle, 0, 1024, j1772Buffer, &j1772ControlBlock);
+  osThreadStaticDef(j1772, startJ1772, osPriorityNormal, 0, 1024, j1772Buffer, &j1772ControlBlock);
   j1772Handle = osThreadCreate(osThread(j1772), NULL);
 
   /* definition and creation of status_led */
@@ -732,8 +732,9 @@ void startServiceGcanTask(void const * argument)
     service_can_rx_buffer();
 
     // uint8_t stat = 0;
-    // update_and_queue_param_u8(&sdcStatus1,stat);
+    update_and_queue_param_float(&chargingPowerLimit,chargingData.powerLimit);
     service_can_tx(&hcan2);
+
 
     osDelay(1);
   }

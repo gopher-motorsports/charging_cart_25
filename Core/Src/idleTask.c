@@ -38,7 +38,7 @@ void runIdleTask(){
     // For debugging sdcStatus
     // printf("\e[1;1H\e[2J");
     // printf("SDC Status:\n");
-    // printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus1.data, sdcStatus2.data, sdcStatus3.data, sdcStatus4.data);   
+    // printf("1: %u\n2: %u\n3: %u\n4: %u\n", sdcStatus17.data, sdcStatus18.data, sdcStatus19.data);   
     // osDelay(500);
 
     // For debugging J1772
@@ -56,5 +56,11 @@ void runIdleTask(){
     // if(soeByOCV_percent.data == 100){
     //     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET); // turn on green led
     // }
+
+    // debugging LEDs - SET the pin to turn LED on
+    HAL_GPIO_WritePin(LED1_GPIO_Port,LED1_Pin,GPIO_PIN_SET); // turn on green led
+    HAL_GPIO_WritePin(LED2_GPIO_Port,LED2_Pin,GPIO_PIN_RESET); // turn on yellow led
+    HAL_GPIO_WritePin(LED3_GPIO_Port,LED3_Pin,GPIO_PIN_RESET); // turn on red led
+    HAL_GPIO_WritePin(LED4_GPIO_Port,LED4_Pin,GPIO_PIN_RESET);
     
 }
