@@ -109,8 +109,8 @@ void getJ1772Status(chargingData_S *chargingData)
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
 
         // Set power limit to default
-        chargingData->maxAmpacity = DEFAULT_CURRENT_LIMIT;
-        chargingData->powerLimit = DEFAULT_VOLTAGE * DEFAULT_CURRENT_LIMIT;
+        // chargingData->maxAmpacity = DEFAULT_CURRENT_LIMIT;
+        chargingData->powerLimit = 6000;
     }
 
     // Send charging power limit to BMS over CAN
