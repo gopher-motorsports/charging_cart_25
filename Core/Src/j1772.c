@@ -32,7 +32,9 @@
 // Standard NEMA maximum current in Amps and voltage in Volts
 // The BMS will assume the standard power limit for NEMA unless it receives a message
 // from the charger board indicating the possibility of a higher power limit
-#define DEFAULT_CURRENT_LIMIT_AMP   (15.0f)
+#define DEFAULT_RATED_CURRENT_AMP   (15.0f)
+// Limit max current to 80% of rated current
+#define DEFAULT_CONT_CURRENT_AMP (12.0f)
 #define DEFAULT_VOLTAGE_VOLT (110.0f)
 
 // Absolute maximum current of 20 Amps to comply with FSAE comp rules (20A breaker)
@@ -115,16 +117,16 @@ void getJ1772Status(chargingData_S *chargingData)
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
 
         // Set power limit to default
-        // chargingData->maxAmpacity = DEFAULT_CURRENT_LIMIT_AMP;
-        chargingData->powerLimit = DEFAULT_VOLTAGE_VOLT * DEFAULT_CURRENT_LIMIT_AMP;
-
+        chargingData->maxAmpacity = DEFAULT_CONT_CURRENT_AMP;
+        chargingData->powerLimit = DEFAULT_VOLTAGE_VOLT * DEFAULT_CONT_CURRENT_AMP;
 
         // Or manually set power limit
         // chargingData->powerLimit = 1000.0f;
     }
 
     // Send charging power limit to BMS over CAN
-    // Note: was not sending so fixed by calling update_and_queue in gopher can task
+    // Note: was not sending so fixed by calling update_and_queue in serviceGcanTask
+    // Note: see serviceGcanTask for second can debug fix
     // update_and_queue_param_float(&chargingPowerLimit,chargingData->powerLimit);
 
 }
