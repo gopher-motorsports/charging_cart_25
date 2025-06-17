@@ -735,6 +735,7 @@ void startServiceGcanTask(void const * argument)
     if((HAL_GetTick() - lastUpdate >= 100)) 
     {
       lastUpdate = HAL_GetTick();
+      chargingPowerLimit.data = chargingData.powerLimit;
       send_group(chargingPowerLimit.info.GROUP_ID);
     }
 
