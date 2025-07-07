@@ -27,16 +27,21 @@
 #define STANDARD_LVL2_VOLT (208.0f)
 
 // Maximum current for J1772 AC level 1 charging
-#define STANDARD_LVL1_AMP (16U)
+#define STANDARD_LVL1_AMP (16.0f)
 
 // Standard NEMA maximum current in Amps and voltage in Volts
-// The charger will assume the standard power limit for NEMA unless CP_PWM is detected,
-// indicating the possibility of a higher power limit
-#define DEFAULT_CURRENT_LIMIT   (15U)
-#define DEFAULT_VOLTAGE (110U)
+// The BMS will assume the standard power limit for NEMA unless it receives a message
+// from the charger board indicating the possibility of a higher power limit
+#define DEFAULT_RATED_CURRENT_AMP   (15.0f)
+// Limit max current to 80% of rated current
+#define DEFAULT_CONT_CURRENT_AMP (12.0f)
+#define DEFAULT_VOLTAGE_VOLT (110.0f)
 
-// Absolute maximum current of 20 Amps to comply with FSAE comp rules
-#define MAX_ALLOWED_AMP (20U)
+// Absolute maximum current of 20 Amps to comply with FSAE comp rules (20A breaker)
+#define MAX_RATED_CURRENT_AMP (20.0f)
+// Limit max current further
+// FSAE student manual says typical continuous current is about 80% of rated current
+#define MAX_CONT_CURRENT_AMP (16.0f)
 
 
 /* ==================================================================== */
@@ -84,23 +89,26 @@ void getJ1772Status(chargingData_S *chargingData)
         // Calculate max current capacity
         chargingData->maxAmpacity = cpHighTime * CP_CURRENT_PER_MICROSEC;
 
-        // Clamp max current to 20 A to comply with comp rules
-        if(chargingData->maxAmpacity > MAX_ALLOWED_AMP)
+        // Clamp max current to avoid tripping 20A breaker at comp
+        if(chargingData->maxAmpacity > MAX_CONT_CURRENT_AMP)
         {
-            chargingData->maxAmpacity = MAX_ALLOWED_AMP;
+            chargingData->maxAmpacity = MAX_CONT_CURRENT_AMP;
         }
 
         // Calculate power limit
-        if(chargingData->maxAmpacity <= STANDARD_LVL1_AMP)
-        {
-            // Level 1 charging
-            chargingData->powerLimit = STANDARD_LVL1_VOLT * chargingData->maxAmpacity;
-        }
-        else
-        {
-            // Level 2 charging
-            chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
-        }
+        // At comp the J1772 EVSE will be 208V
+        chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
+
+        // if(chargingData->maxAmpacity <= STANDARD_LVL1_AMP)
+        // {
+        //     // Level 1 charging
+        //     chargingData->powerLimit = STANDARD_LVL1_VOLT * chargingData->maxAmpacity;
+        // }
+        // else
+        // {
+        //     // Level 2 charging
+        //     chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
+        // }
 	
     } else {
         // No J1772 detected, charge at default NEMA values
@@ -109,12 +117,16 @@ void getJ1772Status(chargingData_S *chargingData)
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
 
         // Set power limit to default
-        chargingData->maxAmpacity = DEFAULT_CURRENT_LIMIT;
-        chargingData->powerLimit = DEFAULT_VOLTAGE * DEFAULT_CURRENT_LIMIT;
+        chargingData->maxAmpacity = DEFAULT_CONT_CURRENT_AMP;
+        chargingData->powerLimit = DEFAULT_VOLTAGE_VOLT * DEFAULT_CONT_CURRENT_AMP;
+
+        // Or manually set power limit
+        // chargingData->powerLimit = 1000.0f;
     }
 
     // Send charging power limit to BMS over CAN
-    // Note: was not sending so fixed by calling update_and_queue in gopher can task
+    // Note: was not sending so fixed by calling update_and_queue in serviceGcanTask
+    // Note: see serviceGcanTask for second can debug fix
     // update_and_queue_param_float(&chargingPowerLimit,chargingData->powerLimit);
 
 }

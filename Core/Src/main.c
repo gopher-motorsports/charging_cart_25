@@ -731,12 +731,22 @@ void startServiceGcanTask(void const * argument)
 
     service_can_rx_buffer();
 
-    // uint8_t stat = 0;
-    update_and_queue_param_float(&chargingPowerLimit,chargingData.powerLimit);
+    static uint32_t lastUpdate = 0;
+    if((HAL_GetTick() - lastUpdate >= 100)) 
+    {
+      lastUpdate = HAL_GetTick();
+      chargingPowerLimit.data = chargingData.powerLimit;
+      send_group(chargingPowerLimit.info.GROUP_ID);
+    }
+
+    // Don't use update_and_queue_param_float for chargingPowerLimit
+    // It will only send when the value is updated, so the BMS will timeout and reset the limit if 
+    // it stays constant
+    // update_and_queue_param_float(&chargingPowerLimit,chargingData.powerLimit);
+
     service_can_tx(&hcan2);
 
-
-    osDelay(1);
+    osDelay(10);
   }
   /* USER CODE END startServiceGcanTask */
 }
