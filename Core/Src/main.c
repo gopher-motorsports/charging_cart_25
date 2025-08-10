@@ -736,6 +736,7 @@ void startServiceGcanTask(void const * argument)
     {
       lastUpdate = HAL_GetTick();
       chargingPowerLimit.data = chargingData.powerLimit;
+      forceEnableBalancing_state.data = 0;
       send_group(chargingPowerLimit.info.GROUP_ID);
     }
 
