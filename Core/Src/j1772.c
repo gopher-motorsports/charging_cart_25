@@ -67,48 +67,50 @@ extern CAN_HandleTypeDef hcan2;
 
 void getJ1772Status(chargingData_S *chargingData)
 {
+        // Manually set power limit
+        chargingData->powerLimit = 6000.0f;
 
     if((HAL_GetTick() - cpLastUpdate) < CP_PWM_TIMOUT_MICROSEC && cpLastUpdate != 0)
 	{
 		// HAL GPIO -> ENABLE CP
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_SET);
 
-        // Copy local of volatile variable
-        uint32_t localHighTime = cpHighTime;
+    //     // Copy local of volatile variable
+    //     uint32_t localHighTime = cpHighTime;
 
-        // Calculate current limit
-        if (localHighTime < CP_MIN_HIGH_TIME_MICROSEC)
-        {
-            localHighTime = CP_MIN_HIGH_TIME_MICROSEC;
-        }
-        else if (localHighTime > CP_MAX_HIGH_TIME_MICROSEC)
-        {
-            localHighTime = CP_MAX_HIGH_TIME_MICROSEC;
-        }
+    //     // Calculate current limit
+    //     if (localHighTime < CP_MIN_HIGH_TIME_MICROSEC)
+    //     {
+    //         localHighTime = CP_MIN_HIGH_TIME_MICROSEC;
+    //     }
+    //     else if (localHighTime > CP_MAX_HIGH_TIME_MICROSEC)
+    //     {
+    //         localHighTime = CP_MAX_HIGH_TIME_MICROSEC;
+    //     }
 
-        // Calculate max current capacity
-        chargingData->maxAmpacity = cpHighTime * CP_CURRENT_PER_MICROSEC;
+    //     // Calculate max current capacity
+    //     chargingData->maxAmpacity = cpHighTime * CP_CURRENT_PER_MICROSEC;
 
-        // Clamp max current to avoid tripping 20A breaker at comp
-        if(chargingData->maxAmpacity > MAX_CONT_CURRENT_AMP)
-        {
-            chargingData->maxAmpacity = MAX_CONT_CURRENT_AMP;
-        }
+    //     // Clamp max current to avoid tripping 20A breaker at comp
+    //     if(chargingData->maxAmpacity > MAX_CONT_CURRENT_AMP)
+    //     {
+    //         chargingData->maxAmpacity = MAX_CONT_CURRENT_AMP;
+    //     }
 
-        // Calculate power limit
-        // At comp the J1772 EVSE will be 208V
-        chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
+    //     // Calculate power limit
+    //     // At comp the J1772 EVSE will be 208V
+    //     chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
 
-        // if(chargingData->maxAmpacity <= STANDARD_LVL1_AMP)
-        // {
-        //     // Level 1 charging
-        //     chargingData->powerLimit = STANDARD_LVL1_VOLT * chargingData->maxAmpacity;
-        // }
-        // else
-        // {
-        //     // Level 2 charging
-        //     chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
-        // }
+    //     // if(chargingData->maxAmpacity <= STANDARD_LVL1_AMP)
+    //     // {
+    //     //     // Level 1 charging
+    //     //     chargingData->powerLimit = STANDARD_LVL1_VOLT * chargingData->maxAmpacity;
+    //     // }
+    //     // else
+    //     // {
+    //     //     // Level 2 charging
+    //     //     chargingData->powerLimit = STANDARD_LVL2_VOLT * chargingData->maxAmpacity;
+    //     // }
 	
     } else {
         // No J1772 detected, charge at default NEMA values
@@ -116,11 +118,11 @@ void getJ1772Status(chargingData_S *chargingData)
         // HAL GPIO -> DISABLE CP
         HAL_GPIO_WritePin(CP_EN_GPIO_Port, CP_EN_Pin, GPIO_PIN_RESET);
 
-        // Set power limit to default
-        chargingData->maxAmpacity = DEFAULT_CONT_CURRENT_AMP;
-        chargingData->powerLimit = DEFAULT_VOLTAGE_VOLT * DEFAULT_CONT_CURRENT_AMP;
+        // // Set power limit to default
+        // chargingData->maxAmpacity = DEFAULT_CONT_CURRENT_AMP;
+        // chargingData->powerLimit = DEFAULT_VOLTAGE_VOLT * DEFAULT_CONT_CURRENT_AMP;
 
-        // Or manually set power limit
+        // // Or manually set power limit
         // chargingData->powerLimit = 1000.0f;
     }
 

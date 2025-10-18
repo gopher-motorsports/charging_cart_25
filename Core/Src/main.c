@@ -259,7 +259,7 @@ int main(void)
   sdcHandle = osThreadCreate(osThread(sdc), NULL);
 
   /* definition and creation of j1772 */
-  osThreadStaticDef(j1772, startJ1772, osPriorityNormal, 0, 1024, j1772Buffer, &j1772ControlBlock);
+  osThreadStaticDef(j1772, startJ1772, osPriorityIdle, 0, 1024, j1772Buffer, &j1772ControlBlock);
   j1772Handle = osThreadCreate(osThread(j1772), NULL);
 
   /* definition and creation of status_led */
@@ -483,6 +483,7 @@ static void MX_TIM2_Init(void)
 
   TIM_ClockConfigTypeDef sClockSourceConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
 
   /* USER CODE BEGIN TIM2_Init 1 */
 
@@ -502,15 +503,28 @@ static void MX_TIM2_Init(void)
   {
     Error_Handler();
   }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
   {
     Error_Handler();
   }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
@@ -709,6 +723,7 @@ void startIdleTask(void const * argument)
   for(;;)
   {
     runIdleTask();
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
     osDelay(1);
   }
   /* USER CODE END startIdleTask */
@@ -736,6 +751,7 @@ void startServiceGcanTask(void const * argument)
     {
       lastUpdate = HAL_GetTick();
       chargingPowerLimit.data = chargingData.powerLimit;
+      forceEnableBalancing_state.data = 0;
       send_group(chargingPowerLimit.info.GROUP_ID);
     }
 
@@ -814,6 +830,7 @@ void Startstatus_led(void const * argument)
   }
   }
   /* USER CODE END Startstatus_led */
+
 
 /**
   * @brief  Period elapsed callback in non blocking mode

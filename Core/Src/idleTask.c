@@ -30,6 +30,8 @@ void runIdleTask(){
         }
     }
 
+   
+
     // For charging
     // printf("\e[1;1H\e[2J");
     // printf("soe by ocv : %f\n", soeByOCV_percent.data * 100.0f);
@@ -81,7 +83,8 @@ void runIdleTask(){
         printf("\e[1;1H\e[2J");
 
         printf("soe OCV: %f\n", soeByOCV_percent.data);
-        printf("soe CC: %f\n\n", soeByCoulombCounting_percent.data);
+        printf("soe CC: %f\n", soeByCoulombCounting_percent.data);
+        printf("bms battery current: %f\n\n", bmsBatteryCurrent_A.data);
 
         printf("Max Cell V: %f\n", maxCellVoltage_V.data);
         printf("Min Cell V: %f\n", minCellVoltage_V.data);
